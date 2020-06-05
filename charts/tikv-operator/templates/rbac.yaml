@@ -1,0 +1,79 @@
+{{- if .Values.serviceAccount.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tikv-operator-controller-manager
+rules:
+- apiGroups:
+  - tikv.org
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - 'apps'
+  resources:
+  - 'statefulsets'
+  - 'deployments'
+  verbs:
+  - '*'
+- apiGroups:
+  - ''
+  resources:
+  - 'events'
+  - 'pods'
+  - 'persistentvolumeclaims'
+  - 'persistentvolumes'
+  - 'services'
+  - 'endpoints'
+  - 'nodes'
+  - 'configmaps'
+  - 'serviceaccounts'
+  verbs:
+  - '*'
+- apiGroups:
+  - 'rbac.authorization.k8s.io'
+  resources:
+  - 'roles'
+  - 'rolebindings'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tikv-operator-controller-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tikv-operator-controller-manager
+subjects:
+- kind: ServiceAccount
+  name: {{ include "tikv-operator.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tikv-operator-controller-manager-leaderelection
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - 'endpoints'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tikv-operator-controller-manager-leaderelection
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tikv-operator-controller-manager-leaderelection
+subjects:
+- kind: ServiceAccount
+  name: {{ include "tikv-operator.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

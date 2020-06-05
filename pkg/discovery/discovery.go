@@ -1,0 +1,118 @@
+// Copyright 2018 TiKV Project Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package discovery
+
+import (
+	"fmt"
+	"os"
+	"strings"
+	"sync"
+
+	"github.com/tikv/tikv-operator/pkg/apis/tikv/v1alpha1"
+	"github.com/tikv/tikv-operator/pkg/client/clientset/versioned"
+	"github.com/tikv/tikv-operator/pkg/pdapi"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
+)
+
+// PDDiscovery helps new PD member to discover all other members in cluster bootstrap phase.
+type PDDiscovery interface {
+	Discover(string) (string, error)
+}
+
+type pdDiscovery struct {
+	cli       versioned.Interface
+	lock      sync.Mutex
+	clusters  map[string]*clusterInfo
+	tcGetFn   func(ns, tcName string) (*v1alpha1.TikvCluster, error)
+	pdControl pdapi.PDControlInterface
+}
+
+type clusterInfo struct {
+	resourceVersion string
+	peers           map[string]struct{}
+}
+
+// NewPDDiscovery returns a PDDiscovery
+func NewPDDiscovery(cli versioned.Interface, kubeCli kubernetes.Interface) PDDiscovery {
+	td := &pdDiscovery{
+		cli:       cli,
+		pdControl: pdapi.NewDefaultPDControl(kubeCli),
+		clusters:  map[string]*clusterInfo{},
+	}
+	td.tcGetFn = td.realTCGetFn
+	return td
+}
+
+func (td *pdDiscovery) Discover(advertisePeerUrl string) (string, error) {
+	td.lock.Lock()
+	defer td.lock.Unlock()
+
+	if advertisePeerUrl == "" {
+		return "", fmt.Errorf("advertisePeerUrl is empty")
+	}
+	klog.Infof("advertisePeerUrl is: %s", advertisePeerUrl)
+	strArr := strings.Split(advertisePeerUrl, ".")
+	if len(strArr) != 4 {
+		return "", fmt.Errorf("advertisePeerUrl format is wrong: %s", advertisePeerUrl)
+	}
+
+	podName, peerServiceName, ns := strArr[0], strArr[1], strArr[2]
+	tcName := strings.TrimSuffix(peerServiceName, "-pd-peer")
+	podNamespace := os.Getenv("MY_POD_NAMESPACE")
+	if ns != podNamespace {
+		return "", fmt.Errorf("the peer's namespace: %s is not equal to discovery namespace: %s", ns, podNamespace)
+	}
+	tc, err := td.tcGetFn(ns, tcName)
+	if err != nil {
+		return "", err
+	}
+	keyName := fmt.Sprintf("%s/%s", ns, tcName)
+	// TODO: the replicas should be the total replicas of pd sets.
+	replicas := tc.Spec.PD.Replicas
+
+	currentCluster := td.clusters[keyName]
+	if currentCluster == nil || currentCluster.resourceVersion != tc.ResourceVersion {
+		td.clusters[keyName] = &clusterInfo{
+			resourceVersion: tc.ResourceVersion,
+			peers:           map[string]struct{}{},
+		}
+	}
+	currentCluster = td.clusters[keyName]
+	currentCluster.peers[podName] = struct{}{}
+
+	if len(currentCluster.peers) == int(replicas) {
+		delete(currentCluster.peers, podName)
+		return fmt.Sprintf("--initial-cluster=%s=%s://%s", podName, tc.Scheme(), advertisePeerUrl), nil
+	}
+
+	pdClient := td.pdControl.GetPDClient(pdapi.Namespace(tc.GetNamespace()), tc.GetName(), tc.IsTLSClusterEnabled())
+	membersInfo, err := pdClient.GetMembers()
+	if err != nil {
+		return "", err
+	}
+
+	membersArr := make([]string, 0)
+	for _, member := range membersInfo.Members {
+		memberURL := strings.ReplaceAll(member.PeerUrls[0], ":2380", ":2379")
+		membersArr = append(membersArr, memberURL)
+	}
+	delete(currentCluster.peers, podName)
+	return fmt.Sprintf("--join=%s", strings.Join(membersArr, ",")), nil
+}
+
+func (td *pdDiscovery) realTCGetFn(ns, tcName string) (*v1alpha1.TikvCluster, error) {
+	return td.cli.TikvV1alpha1().TikvClusters(ns).Get(tcName, metav1.GetOptions{})
+}
