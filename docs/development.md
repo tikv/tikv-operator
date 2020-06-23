@@ -1,10 +1,21 @@
 # Development
 
-## Go
+<!-- toc -->
+- [Prerequisites](#prerequisites)
+- [Verify](#verify)
+- [Unit tests](#unit-tests)
+- [Run tikv-operator locally](#run-tikv-operator-locally)
+<!-- /toc -->
 
-TiKV Operator is written in [Go](https://golang.org). If you don't have a Go development environment, [set one up](https://golang.org/doc/code.html).
+## Prerequisites
 
-The version of Go should be 1.13 or later.
+TiKV Operator is written in [Go](https://golang.org). If you don't have a Go
+development environment, please refer to [official
+document](https://golang.org/doc/code.html) and prepare your environment. The
+version of Go should be 1.13 or later.
+
+[Docker](https://docs.docker.com/get-started/) is also required to build
+images. The latest stable is recommended.
 
 ## Verify
 
