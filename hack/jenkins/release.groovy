@@ -29,7 +29,7 @@ try {
 						$class: 'GitSCM',
 						branches: [[name: "${BUILD_REF}"]],
 						userRemoteConfigs: [[
-							refspec: '+refs/pull/*:refs/remotes/origin/pull/*',
+							refspec: '+refs/heads/*:refs/remotes/origin/* +refs/pull/*:refs/remotes/origin/pull/*',
 							url: "${REPO_GIT_URL}",
 						]]
 					]
