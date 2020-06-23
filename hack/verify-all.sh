@@ -22,3 +22,4 @@ cd $ROOT
 
 hack/verify-boilerplate.sh
 hack/verify-codegen.sh
+hack/verify-toc.sh

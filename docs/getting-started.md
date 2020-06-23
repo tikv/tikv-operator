@@ -1,5 +1,15 @@
 # Getting started
 
+<!-- toc -->
+- [Creating a Kubernetes cluster](#creating-a-kubernetes-cluster)
+- [Deploy TiKV Operator](#deploy-tikv-operator)
+  - [Install helm](#install-helm)
+  - [Install CRD](#install-crd)
+  - [Install tikv-operator](#install-tikv-operator)
+- [Deploy TiKV Cluster](#deploy-tikv-cluster)
+- [Accessing the PD endpoint](#accessing-the-pd-endpoint)
+<!-- /toc -->
+
 ## Creating a Kubernetes cluster
 
 If you have already created a Kubernetes cluster, you can skip to step 2,
