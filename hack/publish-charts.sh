@@ -73,7 +73,7 @@ if [ "${RELEASE_TAG}" != "latest" ]; then
     curl http://charts.pingcap.org/index.yaml -o index-old.yaml
     $HELM_BIN repo index . --url http://charts.pingcap.org/ --merge index-old.yaml
     echo "info: the diff of index.yaml"
-    diff -u index-old.yaml index.yaml
+    diff -u index-old.yaml index.yaml || true
     if [ -n "$DRY_RUN" ]; then
         echo "info: DRY_RUN is set, skipping uploading index.yaml"
     else
