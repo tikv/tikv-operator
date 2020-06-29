@@ -1,36 +1,32 @@
-# Development
+# Development Guide
+
+This document walks you through the process for TiKV Operator development.
 
 <!-- toc -->
 - [Prerequisites](#prerequisites)
-- [Verify](#verify)
-- [Unit tests](#unit-tests)
+- [Verify code changes](#verify-code-changes)
+- [Run unit tests](#run-unit-tests)
 - [Run tikv-operator locally](#run-tikv-operator-locally)
 <!-- /toc -->
 
 ## Prerequisites
 
-TiKV Operator is written in [Go](https://golang.org). If you don't have a Go
-development environment, please refer to [official
-document](https://golang.org/doc/code.html) and prepare your environment. The
-version of Go should be 1.13 or later.
+* [golang](https://golang.org): version >= 1.13
+* [Docker](https://docs.docker.com/get-started/): the latest version is recommended
 
-[Docker](https://docs.docker.com/get-started/) is also required to build
-images. The latest stable is recommended.
+## Verify code changes
 
-## Verify
-
-Run following commands to verify your code change.
+Run the following commands to verify your code changes:
 
 ```shell
 $ make verify
 ```
 
-This will show errors if your code change does not pass checks (e.g. fmt,
-lint). Please fix them before submitting the PR.
+This will show errors if your code changes fail to pass checks (e.g. fmt, lint). If there is any error, fix them before submitting the PR.
 
-## Unit tests
+## Run unit tests
 
-Before running your code in a real Kubernetes cluster, make sure it passes all unit tests.
+Before running your code in a real Kubernetes cluster, make sure it passes all unit tests:
 
 ```shell
 $ make test
@@ -38,43 +34,40 @@ $ make test
 
 ## Run tikv-operator locally
 
-We uses [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) to
-start a Kubernetes cluster locally and
-[kubectl](https://kubernetes.io/docs/reference/kubectl/overview/) must be
-installed to access Kubernetes cluster.
+The following steps use [kind](https://kind.sigs.k8s.io) to start a Kubernetes cluster locally.
 
-You can refer to their official references to install them on your machine, or
-run the following command to install them into our local binary directory:
-`output/bin`.
+1. Install kind and kubectl:
 
-```shell
-$ hack/local-up-operator.sh -i
-$ export PATH=$(pwd)/output/bin:$PATH
-```
+    You can refer to [the official installation steps](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) to install them on your machine, or run the following command to install them into the local binary directory `output/bin`:
 
-Make sure they are installed correctly:
+    ```shell
+    $ hack/local-up-operator.sh -i
+    $ export PATH=$(pwd)/output/bin:$PATH
+    ```
 
-```
-$ kind --version
-...
-$ kubectl version --client
-...
-```
+2. Make sure they are installed correctly:
 
-Create a Kubernetes cluster with `kind`:
+    ```
+    $ kind --version
+    ...
+    $ kubectl version --client
+    ...
+    ```
 
-```shell
-$ kind create cluster
-```
+3. Create a Kubernetes cluster:
 
-Build and run tidb-operator:
+    ```shell
+    $ kind create cluster
+    ```
 
-```shell
-$ ./hack/local-up-operator.sh
-```
+4. Build and run tidb-operator:
 
-Start a basic TiKV cluster:
+    ```shell
+    $ ./hack/local-up-operator.sh
+    ```
 
-```shell
-$ kubectl apply -f examples/basic/tikv-cluster.yaml
-```
+5. Start a basic TiKV cluster:
+
+    ```shell
+    $ kubectl apply -f examples/basic/tikv-cluster.yaml
+    ```

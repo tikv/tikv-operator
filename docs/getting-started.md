@@ -1,19 +1,18 @@
 # Getting started
 
+This document explains how to create a simple Kubernetes cluster and use it to do a basic test deployment of TiKV Cluster using TiKV Operator.
+
 <!-- toc -->
-- [Creating a Kubernetes cluster](#creating-a-kubernetes-cluster)
-- [Deploy TiKV Operator](#deploy-tikv-operator)
-  - [Install helm](#install-helm)
-  - [Install CRD](#install-crd)
-  - [Install tikv-operator](#install-tikv-operator)
-- [Deploy TiKV Cluster](#deploy-tikv-cluster)
-- [Accessing the PD endpoint](#accessing-the-pd-endpoint)
+- [Getting started](#getting-started)
+  - [Step 1: Create a Kubernetes cluster](#step-1-create-a-kubernetes-cluster)
+  - [Step 2: Deploy TiKV Operator](#step-2-deploy-tikv-operator)
+  - [Step 3: Deploy TiKV Cluster](#step-3-deploy-tikv-cluster)
+  - [Step 4: Access the PD endpoint](#step-4-access-the-pd-endpoint)
 <!-- /toc -->
 
-## Creating a Kubernetes cluster
+## Step 1: Create a Kubernetes cluster
 
-If you have already created a Kubernetes cluster, you can skip to step 2,
-Deploy TiKV Operator.
+If you have already created a Kubernetes cluster, skip to [Step 2: Deploy TiKV Operator](#step-2-deploy-tikv-operator).
 
 This section covers 2 different ways to create a simple Kubernetes cluster that
 can be used to test TiKV Cluster locally. Choose whichever best matches your
@@ -22,9 +21,9 @@ environment or experience level.
 - Using [kind](https://kind.sigs.k8s.io/docs/user/quick-start/) (Kubernetes in Docker)
 - Using [minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) (Kubernetes running locally in a VM)
 
-Please refer to their official document to prepare a Kubernetes cluster. If you
-have docker installed, here is the quick way to start a Kubernetes cluster with
-`kind`:
+You can refer to their official documents to prepare a Kubernetes cluster.
+
+The following shows a simple way to create a Kubernetes cluster using kind. Make sure Docker is up and running before proceeding.
 
 On macOS / Linux:
 
@@ -41,76 +40,82 @@ curl.exe -Lo kind-windows-amd64.exe https://kind.sigs.k8s.io/dl/v0.8.1/kind-wind
 .\kind-windows-amd64.exe create cluster
 ```
 
-## Deploy TiKV Operator
+## Step 2: Deploy TiKV Operator
 
-Before proceeding, make sure the following requirements are satisfied:
+Before deployment, make sure the following requirements are satisfied:
 
 - A running Kubernetes Cluster that kubectl can connect to
 - Helm 3
 
-### Install helm
+1. Install helm
 
-Here is a quick way to install it in CLI:
+    ```shell
+    curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+    ```
 
-```shell
-curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-```
+    Refer to [Helm Documentation](https://helm.sh/docs/intro/install/) for more installation alternatives.
 
-Please refer to [the official installation guide](https://helm.sh/docs/intro/install/) for more alternatives.
+2. Install CRD
 
-### Install CRD
+    ```shell
+    kubectl apply -f https://raw.githubusercontent.com/tikv/tikv-operator/master/manifests/crd.v1beta1.yaml
+    ```
 
-```shell
-kubectl apply -f https://raw.githubusercontent.com/tikv/tikv-operator/master/manifests/crd.v1beta1.yaml
-```
+3. Install tikv-operator
 
-### Install tikv-operator
+    1. Add the PingCAP Repository:
 
-First, add the PingCAP Repository:
+        ```shell
+        helm repo add pingcap https://charts.pingcap.org/
+        ```
 
-```shell
-helm repo add pingcap https://charts.pingcap.org/
-```
+    2. Create a namespace for TiKV Operator:
 
-Then, install with the following command:
+        ```shell
+        kubectl create ns tikv-operator
+        helm install --namespace tikv-operator tikv-operator pingcap/tikv-operator --version v0.1.0
+        ```
 
-```shell
-kubectl create ns tikv-operator
-helm install --namespace tikv-operator tikv-operator pingcap/tikv-operator --version v0.1.0
-```
+    3. Install TiKV Operator:
 
-Finally, confirm that the TiKV Operator components are running with this command:
+        ```shell
+        helm install --namespace tikv-operator tikv-operator pingcap/tikv-operator --version v0.1.0
+        ```
 
-```shell
-kubectl --namespace tikv-operator get pods
-```
+    4. Confirm that the TiKV Operator components are running:
 
-## Deploy TiKV Cluster
+        ```shell
+        kubectl --namespace tikv-operator get pods
+        ```
 
-Deploy the TiKV Cluster:
+## Step 3: Deploy TiKV Cluster
 
-```shell
-curl -LO https://raw.githubusercontent.com/tikv/tikv-operator/master/examples/basic/tikv-cluster.yaml
-kubectl apply -f tikv-cluster.yaml
-```
+1. Deploy the TiKV Cluster:
 
-Expected output:
+    ```shell
+    curl -LO https://raw.githubusercontent.com/tikv/tikv-operator/master/examples/basic/tikv-cluster.yaml
+    kubectl apply -f tikv-cluster.yaml
+    ```
 
-```
-tikvcluster.tikv.org/basic created
-```
+    Expected output:
 
-Wait for it to be ready:
+    ```
+    tikvcluster.tikv.org/basic created
+    ```
 
-```shell
-kubectl wait --for=condition=Ready --timeout 10m tikvcluster/basic
-```
+2. Wait for it to be ready:
 
-It may takes several minutes as it needs to pull images from Docker Hub. You can check the progress with the following command:
+    ```shell
+    kubectl wait --for=condition=Ready --timeout 10m tikvcluster/basic
+    ```
 
-```shell
-kubect get pods -o wide
-```
+    It may takes several minutes as it needs to pull images from Docker Hub.
+
+3. Check the progress with the following command:
+
+    ```shell
+    kubect get pods -o wide
+    ```
 
 If the network connection to the Docker Hub is slow, you can try this example which uses images hosted in Alibaba Cloud:
 
@@ -119,7 +124,7 @@ curl -LO https://raw.githubusercontent.com/tikv/tikv-operator/master/examples/ba
 kubectl apply -f tikv-cluster.yaml
 ```
 
-## Accessing the PD endpoint
+## Step 4: Access the PD endpoint
 
 Open a new terminal tab and run this command:
 
