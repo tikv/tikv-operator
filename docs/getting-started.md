@@ -3,11 +3,10 @@
 This document explains how to create a simple Kubernetes cluster and use it to do a basic test deployment of TiKV Cluster using TiKV Operator.
 
 <!-- toc -->
-- [Getting started](#getting-started)
-  - [Step 1: Create a Kubernetes cluster](#step-1-create-a-kubernetes-cluster)
-  - [Step 2: Deploy TiKV Operator](#step-2-deploy-tikv-operator)
-  - [Step 3: Deploy TiKV Cluster](#step-3-deploy-tikv-cluster)
-  - [Step 4: Access the PD endpoint](#step-4-access-the-pd-endpoint)
+- [Step 1: Create a Kubernetes cluster](#step-1-create-a-kubernetes-cluster)
+- [Step 2: Deploy TiKV Operator](#step-2-deploy-tikv-operator)
+- [Step 3: Deploy TiKV Cluster](#step-3-deploy-tikv-cluster)
+- [Step 4: Access the PD endpoint](#step-4-access-the-pd-endpoint)
 <!-- /toc -->
 
 ## Step 1: Create a Kubernetes cluster
