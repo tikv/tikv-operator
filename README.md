@@ -1,11 +1,6 @@
 # TiKV Operator
 
-TiKV Operator is a Kubernetes Operator that aims to automate the deployment,
-management, and operational tasks of TiKV clusters.
-
-## Getting started
-
-Please refer to our [getting started](docs/getting-started.md) tutorial.
+TiKV Operator is no longer maintained. Please use [TiDB Operator](https://github.com/pingcap/tidb-operator) instead.
 
 ## License
 
